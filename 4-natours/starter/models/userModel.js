@@ -65,6 +65,12 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
+userSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour', //this is where the tour id is being stored in Tour id
+  localField: '_id',
+});
+
 userSchema.pre('save', function (next) {
   if (!this.isModified('password') || this.isNew) return next();
   this.passwordChangedAt = Date.now() - 1000;

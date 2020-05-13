@@ -16,15 +16,13 @@ mongoose
     useCreateIndex: true,
     useFindAndModify: false,
     useUnifiedTopology: true,
-    autoIndex: true //fixing unique error
+    autoIndex: true, //fixing unique error
   })
   .then(() => {
     console.log('DB CONNECTION SUCCESS');
   });
 
-const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/tours-simple.json`, 'utf-8')
-);
+const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`, 'utf-8'));
 
 const importData = async () => {
   try {

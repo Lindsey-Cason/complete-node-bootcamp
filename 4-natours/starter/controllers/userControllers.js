@@ -23,7 +23,7 @@ exports.getAllUsers = catchAsync(async (req, res) => {
 
 exports.getUserByID = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await await User.findById(req.params.id).populate('reviews');
     res.status(200).json({
       status: 'Success',
       data: {
