@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
-const validator = require('validator');
 // const User = require('./userModel');
+// const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -12,7 +12,7 @@ const tourSchema = new mongoose.Schema(
       trim: true,
       maxlength: [40, 'A tour name must have less or equal then 40 characters'],
       minlength: [10, 'A tour name must have more or equal then 10 characters'],
-      // validate: [validator.isAlpha, 'Tour name must only contain characters'],
+      // validate: [validator.isAlpha, 'Tour name must only contain characters']
     },
     slug: String,
     duration: {
@@ -36,6 +36,7 @@ const tourSchema = new mongoose.Schema(
       default: 4.5,
       min: [1, 'Rating must be above 1.0'],
       max: [5, 'Rating must be below 5.0'],
+      set: (val) => Math.round(val * 10) / 10, // 4.666666, 46.6666, 47, 4.7
     },
     ratingsQuantity: {
       type: Number,
@@ -49,7 +50,6 @@ const tourSchema = new mongoose.Schema(
       type: Number,
       validate: {
         validator: function (val) {
-          //use regular function here so you can use the this. option. "this" doesn't work with arrow functions.
           // this only points to current doc on NEW document creation
           return val < this.price;
         },
@@ -59,7 +59,7 @@ const tourSchema = new mongoose.Schema(
     summary: {
       type: String,
       trim: true,
-      required: [true, 'A tour must have a description'],
+      required: [true, 'A tour must have a summary'],
     },
     description: {
       type: String,
@@ -80,17 +80,19 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    //start of error
     startLocation: {
-      //GeoJSON
       type: {
         type: String,
-        default: 'Point', //This is a point geometry
+        default: 'Point',
         enum: ['Point'],
       },
       coordinates: [Number],
       address: String,
       description: String,
+      day: Number,
     },
+    //end of error
     locations: [
       {
         type: {
@@ -104,7 +106,12 @@ const tourSchema = new mongoose.Schema(
         day: Number,
       },
     ],
-    guides: [{ type: mongoose.Schema.ObjectId, ref: 'User' }],
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     toJSON: { virtuals: true },
@@ -112,8 +119,14 @@ const tourSchema = new mongoose.Schema(
   }
 );
 
+// tourSchema.index({ price: 1 });
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
+
 tourSchema.virtual('durationWeeks').get(function () {
-  return this.duration / 7;
+  return Math.round((this.duration / 7) * 100) / 100;
+  //This returns a rounded amount of days.
 });
 //Virtual Populate
 tourSchema.virtual('reviews', {
@@ -166,12 +179,12 @@ tourSchema.post(/^find/, function (docs, next) {
 });
 
 // AGGREGATION MIDDLEWARE
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+// tourSchema.pre('aggregate', function (next) {
+//   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
 
-  console.log(this.pipeline());
-  next();
-});
+//   console.log(this.pipeline());
+//   next();
+// });
 
 const Tour = mongoose.model('Tour', tourSchema);
 
